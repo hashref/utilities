@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use v5.26;
+
+use Readonly;
+
+# I pilford these regex from Perl Maven
+# https://perlmaven.com/email-validation-using-regular-expression-in-perl
+#
+# I made a slight modification though. I don't want to allow a '+' in the username, because I am
+# going to be adding the '+'.
+
+Readonly my $USER_REGEX   => qr/[a-z0-9_]([a-z0-9_.]*[a-z0-9_])?/;
+Readonly my $DOMAIN_REGEX => qr/[a-z0-9.-]+/;
+
+my $email = $ARGV[0];
+_usage() unless ( $email && $email =~ m/^$USER_REGEX\@$DOMAIN_REGEX$/ );
+
+my ( $username, $domain ) = split '@', $email;
+$username .= '+' . time();
+
+say join '@', $username, $domain;
+
+sub _usage {
+  say <<~ "EOF";
+    usage: $0 <email address>
+  EOF
+  exit;
+}
