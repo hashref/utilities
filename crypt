@@ -1,0 +1,102 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use v5.26;
+
+use Readonly;
+
+Readonly my %ACTION_FUNCTIONS => (
+  encrypt => \&encrypt,
+  decrypt => \&decrypt
+);
+
+# Get the 'action' and validate it
+my $action = $ARGV[0];
+unless ( $action && $action =~ m/^(en|de)crypt$/) {
+  say 'Invalid crypt action!';
+  _usage();
+}
+
+# Get the files
+my @targets = @ARGV[1 .. $#ARGV];
+unless ( @targets ) {
+  say 'No target files or directories are specified';
+  _usage();
+}
+
+$ACTION_FUNCTIONS{$action}->(\@targets);
+
+sub encrypt {
+  my $targets = shift;
+
+  for my $target ( @{$targets} ) {
+    say 'Encrypting ' . $target;
+
+    unless ( -r $target ) {
+      say 'Target is not readable. Skipping!';
+      say '-' x 10;
+      next;
+    }
+
+    if ( -d $target ) {
+      say 'Target is a directory... archiving and encrypting';
+      my $enc = $target . '.tar.gz.enc';
+      `tar czf - $target | openssl enc -e -aes-256-cbc -out $enc -salt`;
+      say '-' x 10;
+    }
+    elsif ( -f $target ) {
+      say 'Target is a file... encrypting';
+      `openssl enc -e -aes-256-cbc -in $target -out $target.enc -salt`;
+      say '-' x 10;
+    }
+    else {
+      say 'Target is not a valid file type. Skipping!';
+      say '-' x 10;
+    }
+  }
+
+  return 1;
+}
+
+sub decrypt {
+  my $targets = shift;
+
+  for my $target ( @{$targets} ) {
+    say 'Decrypting ' . $target;
+
+    unless ( -r $target ) {
+      say 'Target is not readable. Skipping!';
+      say '-' x 10;
+      next;
+    }
+
+    if ( -f $target ) {
+      my $outfile = $target;
+      $outfile =~ s/.enc$//;
+      `openssl enc -d -aes-256-cbc -in $target -out $outfile -salt`;
+    }
+    else {
+      say $target . ' is not a file type. Skipping!';
+    }
+  }
+
+  return 1;
+}
+
+sub _usage {
+  say <<~ "EOF";
+    usage: $0 <action> <file1> <..fileN>
+
+    There are two valid actions:
+
+      "encrypt"
+        The specified target(s) will be encrypted using aes-256-cbc.
+        Targets can be either files or directories. Directories will 
+        be '.tar.gz' before the encrypt action.
+
+      "decrypt"
+        The specified aes-256-cbc target(s) will be decrypted.
+  EOF
+  exit;
+}
