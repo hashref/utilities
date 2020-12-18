@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+
+# This script will merge text from multiple files into a single file.
+
+use strict;
+use warnings;
+use v5.26;
+
+_usage() unless ( @ARGV >= 2 );
+
+my $master = pop @ARGV;
+unless ( -f $master && -r _ && -w _ ) {
+  say '[ERROR] ' . $master . ': invalid file or permissions';
+  exit 1;
+}
+
+for my $file ( @ARGV ) {
+  unless ( -f $master && -r _ && -w _ ) {
+    say '[ERROR] ' . $file . ': invalid file or permissions';
+  }
+
+  if ( system("cat $file >> $master") ) {
+    say '[ERROR] failure writing to master file';
+    exit 1;
+  }
+
+  unlink $file;
+}
+
+sub _usage {
+  say <<~ "EOF";
+    usage: $0 <file1> <file2> <..fileN>
+  EOF
+  exit;
+}
