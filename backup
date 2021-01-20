@@ -15,7 +15,8 @@ if [ ! -f "${BACKUP_CONFIG_FILE}" ]; then
 fi
 
 # Since there is sensative data in this file, ensure the user has the permission set properly
-if [[ "${OSTYPE}" =~ "darwin*" ]]; then
+if [[ "${OSTYPE}" =~ 'darwin'* ]]; then
+echo "foobar"
   if [ $( stat -f"%p" "${BACKUP_CONFIG_FILE}" | cut -b 4-6 ) -ne 600 ]; then
     info "ABORT: backup config file permissions are too permissive"
     exit 1
