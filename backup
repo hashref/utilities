@@ -15,9 +15,16 @@ if [ ! -f "${BACKUP_CONFIG_FILE}" ]; then
 fi
 
 # Since there is sensative data in this file, ensure the user has the permission set properly
-if [ $( stat -f"%p" "${BACKUP_CONFIG_FILE}" | cut -b 4-6 ) -ne 600 ]; then
-  info "ABORT: backup config file permissions are too permissive"
-  exit 1
+if [[ "${OSTYPE}" =~ "darwin*" ]]; then
+  if [ $( stat -f"%p" "${BACKUP_CONFIG_FILE}" | cut -b 4-6 ) -ne 600 ]; then
+    info "ABORT: backup config file permissions are too permissive"
+    exit 1
+  fi
+else
+  if [ $( stat -c"%a" "${BACKUP_CONFIG_FILE}" ) -ne 600 ]; then
+    info "ABORT: backup config file permissions are too permissive"
+    exit 1
+  fi
 fi
 
 # Source CONF
@@ -34,7 +41,7 @@ trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
 for source in "${BACKUP_SOURCES[@]}"; do
   IFS=$'|' read -r name location <<< "$source"
   info "Starting ${name} Backup"
-  borg create ::"${name}_$(date +"%Y%m%d")" ${location}
+  borg create ::"$(echo ${name} | tr ' ' '_')_$(date +"%Y%m%d")" ${location}
 done
 
 backup_exit=$?
