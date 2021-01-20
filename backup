@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+info() { printf "%s %s\n" "$( date )" "$*" >&2; }
+
+BACKUP_CONFIG_FILE="${HOME}/.backuprc"
+
+# Allow user to assign a local backup configuration file
+if [ "$#" -eq 1 ]; then
+  BACKUP_CONFIG_FILE=$1
+fi
+
+if [ ! -f "${BACKUP_CONFIG_FILE}" ]; then
+  info "ABORT: missing backup config file"
+  exit 1
+fi
+
+# Since there is sensative data in this file, ensure the user has the permission set properly
+if [ $( stat -f"%p" "${BACKUP_CONFIG_FILE}" | cut -b 4-6 ) -ne 600 ]; then
+  info "ABORT: backup config file permissions are too permissive"
+  exit 1
+fi
+
+# Source CONF
+. "${BACKUP_CONFIG_FILE}"
+
+# Validate backup conf data
+if [[ -z ${BORG_REPO+x} || -z ${BORG_PASSPHRASE+x} || -z ${BACKUP_SOURCES+x} ]]; then
+  info "ABORT: back configuration file is not complete"
+  exit 1
+fi
+
+trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
+
+for source in "${BACKUP_SOURCES[@]}"; do
+  IFS=$'|' read -r name location <<< "$source"
+  info "Starting ${name} Backup"
+  borg create ::"${name}_$(date +"%Y%m%d")" ${location}
+done
+
+backup_exit=$?
+
+info "Pruning Backup Repo"
+borg prune --keep-within=7d
+prune_exit=$?
+
+# Use highest exit code as global exit code
+global_exit=$(( backup_exit > prune_exit ? backup_exit : prune_exit ))
+
+if [ ${global_exit} -eq 0 ]; then
+    info "Backup and Prune finished successfully"
+elif [ ${global_exit} -eq 1 ]; then
+    info "Backup and/or Prune finished with warnings"
+else
+    info "Backup and/or Prune finished with errors"
+fi
+
+exit ${global_exit}
