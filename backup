@@ -16,7 +16,6 @@ fi
 
 # Since there is sensative data in this file, ensure the user has the permission set properly
 if [[ "${OSTYPE}" =~ 'darwin'* ]]; then
-echo "foobar"
   if [ $( stat -f"%p" "${BACKUP_CONFIG_FILE}" | cut -b 4-6 ) -ne 600 ]; then
     info "ABORT: backup config file permissions are too permissive"
     exit 1
@@ -42,13 +41,13 @@ trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
 for source in "${BACKUP_SOURCES[@]}"; do
   IFS=$'|' read -r name location <<< "$source"
   info "Starting ${name} Backup"
-  borg create ::"$(echo ${name} | tr ' ' '_')_$(date +"%Y%m%d")" ${location}
+  $BORG_BIN create ::"$(echo ${name} | tr ' ' '_')_$(date +"%Y%m%d")" ${location}
 done
 
 backup_exit=$?
 
 info "Pruning Backup Repo"
-borg prune --keep-within=7d
+$BORG_BIN prune --keep-within=7d
 prune_exit=$?
 
 # Use highest exit code as global exit code
