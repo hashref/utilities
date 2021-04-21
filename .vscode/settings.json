@@ -1,0 +1,11 @@
+{
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Path": "/home/dbetz/.local/bin/flake8",
+  "python.linting.flake8Enabled": true,
+  "python.linting.flake8Args": ["--max-line-length=79"],
+  "python.formatting.provider": "black",
+  "python.formatting.blackPath": "/home/dbetz/.local/bin/black",
+  "python.formatting.blackArgs": ["--line-length=79"],
+  "editor.formatOnSave": true,
+  "editor.rulers": [79]
+}
