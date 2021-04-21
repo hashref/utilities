@@ -36,4 +36,4 @@ if __name__ == "__main__":
         except binascii.Incomplete:
             print("{}: Incomplete Base64 data".format(filename))
             break
-            
+
