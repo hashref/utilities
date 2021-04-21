@@ -1,39 +1,40 @@
 #!/usr/bin/env python3
 
 import sys
-import os.path
+import os
 import base64
 import binascii
+
 
 def decode_b64(encoded_string):
     decodedBytes = base64.b64decode(encoded_string)
     return str(decodedBytes, "utf-8")
+
 
 if __name__ == "__main__":
     for index, filename in enumerate(sys.argv[1:]):
         if not os.path.isfile(filename):
             print("{}: file does not exist".format(filename))
             exit(1)
-        
+
         try:
             with open(filename, "r") as fh:
                 lines = fh.readlines()
-                
+
                 content = ""
                 for line in lines:
                     content += line
-                
+
                 decoded_string = decode_b64(content)
                 print(decoded_string)
-                
+
                 if index + 2 != len(sys.argv):
                     print("-" * 80)
-        
+
         except binascii.Error:
             print("{}: Base64 parsing error".format(filename))
             break
-            
+
         except binascii.Incomplete:
             print("{}: Incomplete Base64 data".format(filename))
             break
-
