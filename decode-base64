@@ -5,13 +5,33 @@ import os.path
 import base64
 
 
-def decode_b64(encoded_string):
+def decode_b64(encoded_string: str) -> str:
+    """
+    Decodes a `base64` encoded string
+
+    Args:
+        encoded_string (str): base64 encoded string
+
+    Returns:
+        str: decoded string
+    """
+
     decodedBytes = base64.b64decode(encoded_string)
 
     return str(decodedBytes, "utf-8")
 
 
-def read_file_content(filename):
+def read_file_content(filename: str) -> str:
+    """
+    Reads the contents of a file.
+
+    Args:
+        filename (str): File to read the contents from
+
+    Returns:
+        str: Data read from the file
+    """
+
     content = ""
 
     with open(filename, "r") as fh:
@@ -22,18 +42,23 @@ def read_file_content(filename):
     return content
 
 
-def write_contents_to_file(filename, content):
-    if not os.path.isfile(filename):
-        raise FileNotFoundError("File not found!")
+def write_contents_to_file(filename: str, content: str) -> None:
+    """
+    Write contents to a file.
 
-    output_filename = str.join("_decoded", os.path.splitext(filename))
-    if os.path.isfile(output_filename):
+    Args:
+        filename (str): name of the file to write the content to.
+        content (str): data to write to the file.
+
+    Raises:
+        FileExistsError: Error raised if the filename already exists
+    """
+
+    if os.path.isfile(filename):
         raise FileExistsError("File already exists!")
 
-    with open(output_filename, "w") as fh:
+    with open(filename, "w") as fh:
         fh.write(content)
-
-    return True
 
 
 if __name__ == "__main__":
@@ -42,7 +67,9 @@ if __name__ == "__main__":
         try:
             encoded_b64 = read_file_content(filename)
             decoded_data = decode_b64(encoded_b64)
-            write_contents_to_file(filename, decoded_data)
+
+            write_filename = str.join("_decoded", os.path.splitext(filename))
+            write_contents_to_file(write_filename, decoded_data)
             print("Success")
 
         except Exception as e:
