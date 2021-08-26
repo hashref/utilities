@@ -41,7 +41,7 @@ trap 'echo $( date ) Backup interrupted >&2; exit 2' INT TERM
 for source in "${BACKUP_SOURCES[@]}"; do
   IFS=$'|' read -r name location <<< "$source"
   info "Starting ${name} Backup"
-  $BORG_BIN create ::"$(echo ${name} | tr ' ' '_')_$(date +"%Y%m%d")" ${location}
+  $BORG_BIN create ::"$(echo ${name} | tr ' ' '_')_$(date +"%Y%m%d")" "${location}"
 done
 
 backup_exit=$?
