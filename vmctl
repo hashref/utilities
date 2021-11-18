@@ -1,0 +1,50 @@
+#!/bin/bash
+
+REQUIRED_EXTERNAL_COMMANDS="VBoxManage pass"
+
+for command in ${REQUIRED_COMMANDS}; do
+  if ! hash "${command}" >/dev/null 2>&1; then
+    printf "Command not found in PATH: %s\n" "${command}" >&2
+  fi
+done
+
+VM_ACTION=$( echo "$1" | tr '[:upper:]' '[:lower:]' )
+VM_NAME=$2
+VM_STATE=$(VBoxManage showvminfo ${VM_NAME} --machinereadable | grep VMState= | sed -En 's/.*="(.*)"/\1/p')
+
+case ${VM_ACTION} in
+  start)
+    if [ "${VM_STATE}" == "running" ]; then
+      echo "${VM_NAME} is already running"
+      exit 1
+    fi
+
+    echo "Starting ${VM_NAME}"
+  
+    DISK_UUID=$(VBoxManage showvminfo ${VM_NAME} --machinereadable | grep SATA-ImageUUID-0-0 | sed -En 's/.*="(.*)"/\1/p')
+    ENCRYPTION_STATUS=$(VBoxManage showmediuminfo ${DISK_UUID} | grep Encryption | sed -En 's/.*(enabled|disabled)/\1/p')
+
+    VBoxManage startvm ${VM_NAME} --type headless
+
+    if [ "${ENCRYPTION_STATUS}" == "enabled" ]; then
+      TEMPFILE=$(mktemp)
+      echo $(pass "keys/${VM_NAME}") > ${TEMPFILE}
+      VBoxManage controlvm ${VM_NAME} addencpassword ${VM_NAME} ${TEMPFILE}
+      rm ${TEMPFILE}
+    fi
+  ;;
+  stop)
+
+    if [ "${VM_STATE}" == "poweroff" ]; then
+      echo "${VM_NAME} is already powered off"
+      exit 1
+    fi
+
+    echo "Stopping ${VM_NAME}"
+    VBoxManage controlvm ${VM_NAME} poweroff
+  ;;
+  *)
+    echo "Invalid Command"
+    exit 1
+  ;;
+esac
